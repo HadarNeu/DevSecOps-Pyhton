@@ -139,8 +139,7 @@ class SQSPolicyScanner:
         logging.info("Scan complete")
 
 def main():
-    # Replace with your S3 bucket name
-    S3_BUCKET = 'your-bucket-name'
+    S3_BUCKET = 's3-sqs-modifier-test-bucket'
     
     scanner = SQSPolicyScanner(account_id=None, s3_bucket=S3_BUCKET)
     scanner.run()
