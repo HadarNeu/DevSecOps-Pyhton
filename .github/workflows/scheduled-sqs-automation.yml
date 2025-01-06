@@ -2,7 +2,7 @@ name: Daily Docker Run
 
 permissions:
   id-token: write
-  contents: read
+  # contents: read
 
 
 on:
@@ -21,12 +21,13 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Configure AWS Credentials for China region audience
+      - name: Configure AWS Credentials for region audience
         uses: aws-actions/configure-aws-credentials@v4
         with:
           audience: sts.amazonaws.com.cn
           aws-region: ${{ vars.DEFAULT_REGION}}
           role-to-assume: ${{ secrets.IAM_GITHUB_ACTIONS_ROLE}}
+          # role-session-name: testrolesession
 
       - name: Pull and run Docker image
         run: |
