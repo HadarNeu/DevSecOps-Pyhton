@@ -32,8 +32,8 @@ jobs:
           
       - name: Pull and run Docker image
         run: |
-          docker pull sqs-automation:latest
-          docker run sqs-automation:latest \
+          docker pull hadarneu/sqs-automation:latest
+          docker run hadarneu/sqs-automation:latest \
             -e S3_BUCKET=${{ vars.S3_BUCKET}} \
             -e FILE_PATH=${{ vars.FILE_PATH}} \
             -e LOG_MODE=${{ vars.LOG_MODE}}
