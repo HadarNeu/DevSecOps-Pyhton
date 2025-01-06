@@ -1,1 +1,1 @@
-# DevSecOps-Pyhton
+# DevSecOps-Python

@@ -1,0 +1,56 @@
+name: Daily Docker Run
+
+permissions:
+  id-token: write
+  contents: read
+
+
+on:
+  # schedule:
+  #   - cron: '0 0 * * *'  # Runs at 00:00 UTC daily - 2:00 AM Israel Time
+  workflow_dispatch:      # Allows manual trigger
+
+jobs:
+  run-container:
+    permissions:
+      id-token: write
+      contents: read
+
+    runs-on: ubuntu-latest
+    environment: dev
+    env:
+      ACTIONS_STEP_DEBUG: true
+    steps:
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Configure AWS Credentials for region audience
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          audience: sts.amazonaws.com
+          aws-region: ${{ vars.DEFAULT_REGION}}
+          role-to-assume: ${{ vars.IAM_GITHUB_ACTIONS_ROLE}}
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          
+      - name: Pull and run Docker image
+        run: |
+          docker pull sqs-automation:latest
+          docker run sqs-automation:latest \
+            -e S3_BUCKET=${{ vars.S3_BUCKET}} \
+            -e FILE_PATH=${{ vars.FILE_PATH}} \
+            -e LOG_MODE=${{ vars.LOG_MODE}}
+
+
+      - name: Handle potential failures
+        if: failure()
+        run: |
+          echo "Container run failed"
+          exit 1
