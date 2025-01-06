@@ -1,3 +1,0 @@
-S3_BUCKET=${{ vars.S3_BUCKET }}
-FILE_PATH=${{ vars.FILE_PATH }}
-LOG_MODE=${{ vars.LOG_MODE }}
