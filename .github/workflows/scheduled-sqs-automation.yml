@@ -33,7 +33,7 @@ jobs:
       - name: Pull and run Docker image
         run: |
           docker pull hadarneu/sqs-automation:latest
-          docker run --env-file environment_vars hadarneu/sqs-automation:latest 
+          docker run --env-file ./environment_vars hadarneu/sqs-automation:latest 
 
 
       - name: Handle potential failures
