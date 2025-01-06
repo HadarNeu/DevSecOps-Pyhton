@@ -14,13 +14,6 @@ logging.basicConfig(
     format='%(asctime)s - %(message)s'
 )
 
-
-# def create_log_txt_file(sqs_name, path="./log.txt"):
-#     with open(path, "wt") as log_file:
-#         log_file.write(sqs_name)
-
-#     logging.debug(f"Wrote sqs name to log.txt: {sqs_name}")
-
 @dataclass
 class SQSPolicyData:
     def __init__(self, policy=None, queue_url=None, regions=None, region = None, account_id=None):
@@ -206,7 +199,7 @@ class SQSExternalPolicy:
                 # Read existing content and strip newline characters
                 file.seek(0)  # Ensure we're reading from the beginning of the file
                 existing_data = [line.strip() for line in file.readlines()]
-                
+
                 if new_data not in existing_data:
                     file.write(f"{new_data}\n")
                     logging.info("New sqs name added to the file successfully")
