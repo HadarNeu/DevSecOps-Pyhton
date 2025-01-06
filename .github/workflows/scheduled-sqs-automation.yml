@@ -30,7 +30,7 @@ jobs:
       - name: Configure AWS Credentials for region audience
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          audience: sts.amazonaws.com.cn
+          audience: sts.amazonaws.com
           aws-region: ${{ vars.DEFAULT_REGION}}
           role-to-assume: ${{ vars.IAM_GITHUB_ACTIONS_ROLE}}
           # role-session-name: testrolesession
