@@ -26,7 +26,7 @@ jobs:
         with:
           audience: sts.amazonaws.com.cn
           aws-region: ${{ vars.DEFAULT_REGION}}
-          role-to-assume: ${{ secrets.IAM_GITHUB_ACTIONS_ROLE}}
+          role-to-assume: ${{ vars.IAM_GITHUB_ACTIONS_ROLE}}
           # role-session-name: testrolesession
 
       - name: Pull and run Docker image
