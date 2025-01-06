@@ -33,8 +33,13 @@ jobs:
           audience: sts.amazonaws.com
           aws-region: ${{ vars.DEFAULT_REGION}}
           role-to-assume: ${{ vars.IAM_GITHUB_ACTIONS_ROLE}}
-          # role-session-name: testrolesession
 
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          
       - name: Pull and run Docker image
         run: |
           docker pull sqs-automation:latest
