@@ -5,9 +5,10 @@ from datetime import datetime
 import logging
 import copy
 import sys
+import os
+from dotenv import load_dotenv
 
 # Configure logging
-# todo: Instead of logging to log.txt, log only to stdout 
 logging.basicConfig(
     stream=sys.stdout,
     level=logging.INFO,
@@ -16,15 +17,10 @@ logging.basicConfig(
 
 @dataclass
 class SQSPolicyData:
-    def __init__(self, policy=None, queue_url=None, regions=None, region = None, account_id=None):
-        self.region = region
+    def __init__(self, regions=None, account_id=None):
         self.session = boto3.Session()
         self.regions = regions or self.get_all_regions()
-        # self.policy = policy or self.get_policy(region, queue_url)
-        self.queue_url = queue_url or self.get_sqs_urls_per_region(region)
         self.account_id = account_id or self.get_account_id()
-
-
 
     def get_account_id(self):
         # Use STS to get the caller identity and extract the account ID
@@ -116,22 +112,18 @@ class SQSPolicyData:
         try: 
             for statement in policy_doc.get('Statement', []):
                 # checks if Principal is regex *
-                if 'Principal' in statement:
-                    if isinstance(statement['Principal'], str): 
-                        if statement['Principal'] == "*": 
-                            return True
+                if 'Principal' in statement and isinstance(statement['Principal'], str) and statement['Principal'] == "*": 
+                    return True
 
-                    # if there is AWS in the Principal 
-                    if 'AWS' in statement['Principal']:
-                        aws_principal = statement['Principal']['AWS']
-                        
-                        if isinstance(aws_principal, list):
-                            for i, p in enumerate(aws_principal): #iterate over the principals
-                                if p == "*" or (
-                                    isinstance(p, str) and 
-                                    not p.startswith(f"arn:aws:iam::{self.account_id}")): #do you belong to my account?
-                                        logging.info(f"policy has external principal permissions {queue_url}")
-                                        return True 
+                # if there is AWS in the Principal 
+                if 'AWS' in statement['Principal']:
+                    aws_principal = statement['Principal']['AWS']
+                    
+                    if isinstance(aws_principal, list):
+                        for principal in aws_principal: #iterate over the principals
+                            if principal == "*" or (isinstance(principal, str) and not principal.startswith(f"arn:aws:iam::{self.account_id}")): 
+                                logging.info(f"policy has external principal permissions {queue_url}")
+                                return True 
 
             logging.info(f"policy is valid {queue_url}")
             return False 
@@ -142,13 +134,36 @@ class SQSPolicyData:
         
             
 class SQSExternalPolicy:
-    def __init__(self, s3_bucket, file_name, log_mode=False, external_policies={}):
+    def __init__(self, s3_bucket: str, file_name: str, log_mode: bool, external_policies={}):
+        self.session = boto3.Session()
+        self.validate_s3_bucket(s3_bucket)
         self.s3_bucket = s3_bucket
         self.log_mode = log_mode
         self.external_policies = external_policies
         self.file_name = file_name
-        self.session = boto3.Session()
+        
 
+    def validate_s3_bucket(self, s3_bucket: str):
+        """ this function validates the bucket name exists in the current account"""
+        s3_client = self.session.client('s3')
+
+        try:
+            # List all the buckets in the account
+            response = s3_client.list_buckets()
+            bucket_names = [bucket['Name'] for bucket in response['Buckets']]
+
+            # Check if the provided bucket name exists
+            if s3_bucket in bucket_names:
+                logging.info(f"Bucket '{s3_bucket}' exists in the current account.")
+            else:
+                logging.info(f"Bucket '{s3_bucket}' does not exist in the current account.")
+
+        except s3_client.exceptions.NoCredentialsError:
+            logging.info("Credentials not available.")
+        except s3_client.exceptions.PartialCredentialsError:
+            logging.info("Incomplete credentials provided.")
+        except Exception as e:
+            logging.info(f"An error occurred: {str(e)}")
     
     def modify_policy(self, region: str, queue_url: str, wanted_policy_doc):
         """
@@ -214,7 +229,8 @@ class SQSExternalPolicy:
         try:
             s3 = self.session.client('s3')
             timestamp = datetime.now().strftime('%m-%d-%Y_%H-%M-%S')
-            key = f'{self.file_name}-{timestamp}'
+            filename = os.path.basename(self.file_name) # strip path is exists
+            key = f'{filename}-{timestamp}'
             
             s3.upload_file(self.file_name, self.s3_bucket, key)
             logging.info(f"Log file uploaded to s3://{self.s3_bucket}/{key}")
@@ -246,7 +262,8 @@ class SQSExternalPolicy:
             for queue_url in queue_urls:
                 policy = sqsData.get_policy(region, queue_url)
                 if sqsData.is_policy_external(policy, queue_url):
-                    if not self.log_mode:
+                    if self.log_mode == False:
+                        logging.info(f"this is log mode {self.log_mode}")
                         modified_policy  =  sqsData.get_secured_policy(policy, queue_url)  
                         self.modify_policy(region, queue_url, modified_policy)
 
@@ -259,9 +276,13 @@ class SQSExternalPolicy:
 
 
 def main():
-    s3_bucket = 's3-sqs-modifier-test-bucket'
-    sqs_file_name = 'log.txt'
-    log_mode = True
+    # Load environment variables from the .env file
+    load_dotenv()
+
+    # Access environment variables
+    s3_bucket = os.getenv('S3_BUCKET')
+    sqs_file_name = os.getenv('FILE_PATH')
+    log_mode = os.getenv('LOG_MODE')
     
     scanner = SQSExternalPolicy(s3_bucket=s3_bucket, file_name=sqs_file_name, log_mode=log_mode)
     scanner.run()

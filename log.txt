@@ -1,6 +1,2 @@
 test-sqs in region us-east-1
 test-sqs-2 in region us-east-1
-test-sqs in region us-east-1
-test-sqs-2 in region us-east-1
-test-sqs in region us-east-1
-test-sqs-2 in region us-east-1
