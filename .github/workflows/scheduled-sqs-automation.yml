@@ -2,8 +2,7 @@ name: Daily Docker Run
 
 on:
   schedule:
-    - cron '*/10 * * * *'
-    # - cron: '0 0 * * *'  # Runs at 00:00 UTC daily - 2:00 AM Israel Time
+    - cron: '0 0 * * *'  # Runs at 00:00 UTC daily - 2:00 AM Israel Time
   workflow_dispatch:      # Allows manual trigger
 
 jobs:
