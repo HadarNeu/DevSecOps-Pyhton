@@ -1,8 +1,5 @@
 name: Daily Docker Run
 
-permissions:
-  id-token: write
-  # contents: read
 
 
 on:
@@ -12,6 +9,10 @@ on:
 
 jobs:
   run-container:
+    permissions:
+      id-token: write
+      contents: read
+
     runs-on: ubuntu-latest
     environment: dev
     env:
@@ -22,14 +23,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Checkout actions-oidc-debugger
-        uses: actions/checkout@v3
-        with:
-          repository: github/actions-oidc-debugger
-          ref: main
-          token: ${{ secrets.GITHUB_TOKEN }}  #${{ secrets.your-checkout-token }}
-          path: ./.github/actions/actions-oidc-debugger
 
       - name: Configure AWS Credentials for region audience
         uses: aws-actions/configure-aws-credentials@v4
