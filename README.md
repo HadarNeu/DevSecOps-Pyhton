@@ -7,9 +7,11 @@ There are two automations:
 
 # SQS Scanner
 ### Python Code Logic
+[SqsScannerDiagramLink](https://www.canva.com/design/DAGbjAe_png/_NpFZR4R9v4dV3vmEe8mtA/view?utm_content=DAGbjAe_png&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=h0f72adeaf8)
 ![sqs_code_logic](./images/sqs_code_logic.png?raw=true "output")
 
 ### Workflows Description
+[WorkflowsDiagramLink](https://www.canva.com/design/DAGbjV7jxiA/riUShSy9-_oimWD8wsG8aA/view?utm_content=DAGbjV7jxiA&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=h4d3da4ce8b)
 ![sqs_scanner_workflows](./images/sqs_scanner_workflows.png?raw=true "output")
 
 ## Deploy on your own
@@ -36,9 +38,9 @@ False if you'd like to modify the policies found as having external principal po
 After creating all prerequisites you can safely commit to main branch and the [build-and-push.yml](https://github.com/HadarNeu/DevSecOps-Pyhton/blob/main/.github/workflows/build-and-push.yml) workflow will be automatically deployed. The [scheduled-sqs-automation.yml](https://github.com/HadarNeu/DevSecOps-Pyhton/blob/main/.github/workflows/scheduled-sqs-automation.yml) workflow is scheduled to run once a day. 
 
 ### Challenges I Encountered 
-* **GitHub OIDC provider-** I didn't want to use credentials as secrets in the GitHub environment because it usually means the credentials don't have any time constraint. OICD Provider combined with a role containing fitting trust policies is a pretty straightforward proccess but difficult to debug due to lack of logs. 
+* **GitHub OIDC provider-** I didn't want to use credentials as secrets in the GitHub environment because it usually means the credentials don't have any time constraint. OIDC Provider configured to a role containing the provider's trust policies is a pretty straightforward proccess but difficult to debug due to lack of logs. 
 * **Env Vars use in Docker Container-** Locally works a certain way that doesn't work with GitHub actions. I've had to dive deep into loads of blogs until I found my current solution. Of course, this solution will probably not be used in a normal company, since K8s has ConfigMap and Secrets. 
-* **Trivy -** I found that it made no sense to have a trivy test (on code/ images) without having the opportunity to view the results in a comfortable way. Eventually I ended up with the sarif file solution that sends all security results to GitHuv Security Tab. 
+* **Trivy-** I found that it made no sense to have a trivy test (on code/ images) without having the opportunity to view the results in a comfortable way. Eventually I ended up with the sarif file solution that sends all security results to GitHuv Security Tab. 
 
 ### What's Next?
 1. **Log file beautify-** take file extention and put it in the end of the file name when pushing to s3. 
