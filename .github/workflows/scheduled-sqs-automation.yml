@@ -33,12 +33,12 @@ jobs:
           
       - name: Pull Docker image
         run: |
-          docker pull hadarneu/sqs-automation:latest
+          docker pull ${{ secrets.DOCKERHUB_USERNAME }}/sqs-automation:${{ vars.VERSION }}
 
       - name: Run Trivy image vulnerability scanner
         uses: aquasecurity/trivy-action@7b7aa264d83dc58691451798b4d117d53d21edfe
         with:
-          image-ref: 'hadarneu/sqs-automation:latest'
+          image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/sqs-automation:${{ vars.VERSION }}
           format: 'template'
           template: '@/contrib/sarif.tpl'
           output: 'trivy-image-results.sarif'
@@ -59,7 +59,7 @@ jobs:
                     -e S3_BUCKET=${{ vars.S3_BUCKET }} \
                     -e FILE_PATH=${{ vars.FILE_PATH }} \
                     -e LOG_MODE=${{ vars.LOG_MODE }} \
-                    hadarneu/sqs-automation:latest
+                    ${{ secrets.DOCKERHUB_USERNAME }}/sqs-automation:${{ vars.VERSION }}
 
       - name: Handle potential failures
         if: failure()
