@@ -45,12 +45,12 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/sqs-automation:${{ vars.VERSION }}
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ vars.IMAGE_NAME }}:${{ vars.VERSION }}
           push: false 
 
       - name: Push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/sqs-automation:${{ vars.VERSION }}
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ vars.IMAGE_NAME }}:${{ vars.VERSION }}
           push: true 
