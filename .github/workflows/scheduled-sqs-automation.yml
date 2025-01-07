@@ -1,19 +1,19 @@
-name: Daily Docker Run
+name: Daily SQS Automation Docker Run
 
 permissions:
   id-token: write
   contents: read
-
+  security-events: write
+  
 
 on:
   schedule:
-    - cron: '0 * * * *' # testing once every hour
-    # - cron: '0 0 * * *'  # Runs at 00:00 UTC daily - 2:00 AM Israel Time
+    - cron: '0 0 * * *'  # Runs at 00:00 UTC daily - 2:00 AM Israel Time
   workflow_dispatch:      # Allows manual trigger
 
 jobs:
   run-container:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment: dev
     env:
       ACTIONS_STEP_DEBUG: true
@@ -33,7 +33,22 @@ jobs:
           
       - name: Pull Docker image
         run: |
-          docker pull hadarneu/sqs-automation:latest
+          docker pull ${{ secrets.DOCKERHUB_USERNAME }}/sqs-automation:${{ vars.VERSION }}
+
+      - name: Run Trivy image vulnerability scanner
+        uses: aquasecurity/trivy-action@7b7aa264d83dc58691451798b4d117d53d21edfe
+        with:
+          image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/sqs-automation:${{ vars.VERSION }}
+          format: 'template'
+          template: '@/contrib/sarif.tpl'
+          output: 'trivy-image-results.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-image-results.sarif'
+
 
       - name: Run Docker container
         run: |
@@ -44,7 +59,7 @@ jobs:
                     -e S3_BUCKET=${{ vars.S3_BUCKET }} \
                     -e FILE_PATH=${{ vars.FILE_PATH }} \
                     -e LOG_MODE=${{ vars.LOG_MODE }} \
-                    hadarneu/sqs-automation:latest
+                    ${{ secrets.DOCKERHUB_USERNAME }}/sqs-automation:${{ vars.VERSION }}
 
       - name: Handle potential failures
         if: failure()

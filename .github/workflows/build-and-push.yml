@@ -1,4 +1,8 @@
-name: Docker Build and Push
+name: SQS Automation Docker Build and Push
+
+permissions:
+  security-events: write
+  contents: read
 
 on:
   push:
@@ -8,11 +12,27 @@ on:
 
 jobs:
   build-and-push:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment: dev
     
     steps:
       - uses: actions/checkout@v4 #checkout repository
+
+      - name: Run Trivy filesystem scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'template'
+          template: '@/contrib/sarif.tpl'
+          output: 'trivy-code-results.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          security-checks: 'vuln,secret,config'
+
+      - name: Upload FS/code Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-code-results.sarif'
       
       - name: Login to DockerHub
         uses: docker/login-action@v3
@@ -20,9 +40,32 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           
-      - name: Build and push
+      - name: Build Docker image
+        id: build
         uses: docker/build-push-action@v5
         with:
           context: .
-          push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/sqs-automation:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/sqs-automation:${{ vars.VERSION }}
+          push: false 
+
+
+      - name: Run Trivy image vulnerability scanner
+        uses: aquasecurity/trivy-action@7b7aa264d83dc58691451798b4d117d53d21edfe
+        with:
+          image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/sqs-automation:${{ vars.VERSION }}
+          format: 'template'
+          template: '@/contrib/sarif.tpl'
+          output: 'trivy-image-results.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-image-results.sarif'
+
+      - name: Push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/sqs-automation:${{ vars.VERSION }}
+          push: true 
