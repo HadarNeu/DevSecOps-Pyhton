@@ -83,3 +83,4 @@ It should look something like this:
 5. Create a VPC and all networking components using **Terraform**, in order for the app to be hosted privately. 
 6. Create an **OpenVPN** server in order to access the EC2 server. 
 7. Modify the app to present the most relevant fields in the metadata's query response. 
+8. **Metadata Hub-** this script can be developed into a server management platform that will retrive metadata information about other servers in the organization. 
