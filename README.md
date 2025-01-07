@@ -69,7 +69,7 @@ and the webserver will be turned on.
 
 Access your metadata via the browser: ```<public ip address>:5000/metadata```
 
-It should look something like this: (pretty ugly, I know)
+It should look something like this:
 ![alt text](./images/ec2-metadata-edited.png?raw=true "output")
 
 ### Challenges I Encountered 
