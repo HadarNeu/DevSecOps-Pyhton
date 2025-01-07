@@ -35,28 +35,20 @@ jobs:
         run: |
           docker pull hadarneu/sqs-automation:latest
 
-      - name: Manual Trivy Setup
-        uses: aquasecurity/setup-trivy@v0.2.0
-        with:
-          cache: true
-          version: v0.57.1
-
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.29.0
+        uses: aquasecurity/trivy-action@7b7aa264d83dc58691451798b4d117d53d21edfe
         with:
-          image-ref: 'hadarneu/sqs-automation:latest'
-          format: 'sarif'
-          # exit-code: '1'
-          ignore-unfixed: true
-          vuln-type: 'os,library'
+          image-ref: 'docker.io/my-organization/my-app:${{ github.sha }}'
+          format: 'template'
+          template: '@/contrib/sarif.tpl'
+          output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH'
-          scan-type: 'image'
-          output: 'trivy.sarif'
 
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: trivy.sarif
+          sarif_file: 'trivy-results.sarif'
+
 
       - name: Run Docker container
         run: |
