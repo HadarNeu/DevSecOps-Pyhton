@@ -50,7 +50,7 @@ jobs:
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
           scan-type: 'image'
-          output: 'trivy.json'
+          output: 'table'
 
       - name: Run Docker container
         run: |
