@@ -7,8 +7,7 @@ permissions:
 
 on:
   schedule:
-    - cron: '0 * * * *' # testing once every hour
-    # - cron: '0 0 * * *'  # Runs at 00:00 UTC daily - 2:00 AM Israel Time
+    - cron: '0 0 * * *'  # Runs at 00:00 UTC daily - 2:00 AM Israel Time
   workflow_dispatch:      # Allows manual trigger
 
 jobs:
