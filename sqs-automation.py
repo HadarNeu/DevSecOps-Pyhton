@@ -18,7 +18,7 @@ logging.basicConfig(
 @dataclass
 class SQSPolicyData:
     def __init__(self, regions=None, account_id=None):
-        self.session = boto3.Session()
+        self.session = boto3.Session(region_name='eu-west-1')
         self.regions = regions or self.get_all_regions()
         self.account_id = account_id or self.get_account_id()
 
@@ -96,14 +96,17 @@ class SQSPolicyData:
 
         # Create a deep copy of the policy document
         modified_policy = copy.deepcopy(policy_doc)
+        try:
+            for statement in modified_policy.get('Statement', []):
+                # checking is policy external in main 
+                if 'Principal' in statement:
+                    statement['Principal'] = {"AWS": f"arn:aws:iam::{self.account_id}:root"}
 
-        for statement in modified_policy.get('Statement', []):
-            # checking is policy external in main 
-            # if 'Principal' in statement and self.is_policy_external(modified_policy, queue_url): 
-            if 'Principal' in statement:
-                statement['Principal'] = {"AWS": f"arn:aws:iam::{self.account_id}:root"}
-
-        return modified_policy
+            logging.info(f"successfully returned a secured policy")
+            return modified_policy
+        
+        except Exception as e:
+            logging.error(f"Error processing policy {queue_url}: {str(e)}")
 
     def is_policy_external(self, policy_doc, queue_url: str):
         """ Gets a policy json document (dictionary) and a queue_url
@@ -136,13 +139,11 @@ class SQSPolicyData:
 class SQSExternalPolicy:
     def __init__(self, s3_bucket: str, file_name: str, log_mode: bool, external_policies={}):
         self.session = boto3.Session()
-        self.validate_s3_bucket(s3_bucket)
-        self.s3_bucket = s3_bucket
-        self.log_mode = log_mode
+        self.s3_bucket = self.validate_s3_bucket(s3_bucket)
+        self.log_mode = self._validate_log_mode(log_mode)
         self.external_policies = external_policies
         self.file_name = file_name
         
-
     def validate_s3_bucket(self, s3_bucket: str):
         """ this function validates the bucket name exists in the current account"""
         s3_client = self.session.client('s3')
@@ -155,15 +156,26 @@ class SQSExternalPolicy:
             # Check if the provided bucket name exists
             if s3_bucket in bucket_names:
                 logging.info(f"Bucket '{s3_bucket}' exists in the current account.")
+                return s3_bucket
             else:
-                logging.info(f"Bucket '{s3_bucket}' does not exist in the current account.")
+                logging.error(f"Bucket '{s3_bucket}' does not exist in the current account.")
 
         except s3_client.exceptions.NoCredentialsError:
-            logging.info("Credentials not available.")
+            logging.error("Credentials not available.")
         except s3_client.exceptions.PartialCredentialsError:
-            logging.info("Incomplete credentials provided.")
+            logging.error("Incomplete credentials provided.")
         except Exception as e:
-            logging.info(f"An error occurred: {str(e)}")
+            logging.error(f"An error occurred: {str(e)}")
+
+    @staticmethod
+    def _validate_log_mode(log_mode):
+        if isinstance(log_mode, str):
+            log_mode_test = log_mode.lower()
+            if log_mode_test in ('true', 'yes', '1', 'on'):
+                return True
+            elif log_mode_test in ('false', 'no', '0', 'off'):
+                return False
+            raise ValueError(f"Invalid boolean string for log_mode: {log_mode}")
     
     def modify_policy(self, region: str, queue_url: str, wanted_policy_doc):
         """
@@ -227,6 +239,8 @@ class SQSExternalPolicy:
     def upload_file_to_s3(self):
         """Upload log file to S3"""
         try:
+            logging.info(f"This is the type of s3: {type(self.s3_bucket)}")
+            logging.info(f"This is the type of file name: {type(self.file_name)}")
             s3 = self.session.client('s3')
             timestamp = datetime.now().strftime('%m-%d-%Y_%H-%M-%S')
             filename = os.path.basename(self.file_name) # strip path is exists
@@ -262,8 +276,7 @@ class SQSExternalPolicy:
             for queue_url in queue_urls:
                 policy = sqsData.get_policy(region, queue_url)
                 if sqsData.is_policy_external(policy, queue_url):
-                    if self.log_mode == False:
-                        logging.info(f"this is log mode {self.log_mode}")
+                    if not self.log_mode:
                         modified_policy  =  sqsData.get_secured_policy(policy, queue_url)  
                         self.modify_policy(region, queue_url, modified_policy)
 
@@ -283,7 +296,7 @@ def main():
     s3_bucket = os.getenv('S3_BUCKET')
     sqs_file_name = os.getenv('FILE_PATH')
     log_mode = os.getenv('LOG_MODE')
-    
+
     scanner = SQSExternalPolicy(s3_bucket=s3_bucket, file_name=sqs_file_name, log_mode=log_mode)
     scanner.run()
 
