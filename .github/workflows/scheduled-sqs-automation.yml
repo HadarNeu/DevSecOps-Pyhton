@@ -40,6 +40,9 @@ jobs:
                     -e AWS_SECRET_ACCESS_KEY=${{ env.AWS_SECRET_ACCESS_KEY }} \
                     -e AWS_SESSION_TOKEN=${{ env.AWS_SESSION_TOKEN }} \
                     -e AWS_REGION=${{ vars.DEFAULT_REGION }} \
+                    -e S3_BUCKET=${{ vars.S3_BUCKET }} \
+                    -e FILE_PATH=${{ vars.FILE_PATH }} \
+                    -e LOG_MODE=${{ vars.LOG_MODE }} \
                     hadarneu/sqs-automation:latest
 
       - name: Handle potential failures
