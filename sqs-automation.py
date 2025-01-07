@@ -122,7 +122,7 @@ class SQSPolicyData:
                 if 'AWS' in statement['Principal']:
                     aws_principal = statement['Principal']['AWS']
 
-                    if isinstance(aws_principal, str) and aws_principal == "*" or not aws_principal.startswith(f"arn:aws:iam::{self.account_id}"):
+                    if isinstance(aws_principal, str) and (aws_principal == "*" or not aws_principal.startswith(f"arn:aws:iam::{self.account_id}")):
                         logging.info(f"policy has external principal permissions {queue_url}")
                         return True 
 
