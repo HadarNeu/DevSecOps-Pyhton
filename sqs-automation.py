@@ -18,7 +18,7 @@ logging.basicConfig(
 @dataclass
 class SQSPolicyData:
     def __init__(self, regions=None, account_id=None):
-        self.session = boto3.Session(region_name='eu-west-1')
+        self.session = boto3.Session()
         self.regions = regions or self.get_all_regions()
         self.account_id = account_id or self.get_account_id()
 

@@ -70,16 +70,16 @@ and the webserver will be turned on.
 Access your metadata via the browser: ```<public ip address>:5000/metadata```
 
 It should look something like this: (pretty ugly, I know)
-![alt text](./docs/images/kubectl-get-pods.png?raw=true "output")
+![alt text](./images/ec2-metadata-edited.png?raw=true "output")
 
 ### Challenges I Encountered 
-* EC2 - As an experienced DevOps engineer with a passion for security, I found it hard working with a public EC2, feeling as it is exposed to the world and doesn't comply with any best practice whatsoever. But with a lack of budget for this task, Iv'e had to use only free resources. My solution was using my personal VPN to be the only connection available for the EC2 server. 
+* **EC2-** As an experienced DevOps engineer with a passion for security, I found it hard working with a public EC2, feeling as it is exposed to the world and doesn't comply with any best practice whatsoever. But with a lack of budget for this task, Iv'e had to use only free resources. My solution was using my personal VPN to be the only connection available for the EC2 server. 
 
 ### What's Next?
-1. Apply caching and TTL
-2. Create a Dockerfile to containerize the script.  
-3. Create an EKS deployment and run the web app on that cluster - deploy the app using a helm chart. 
-4. Insert some html templates to make the app presentable. 
-5. Create a VPC and all networking components using Terraform, in order for the app to be hosted privately. 
-6. Create an OpenVPN server in order to access the EC2 server. 
+1. Apply **caching** and TTL
+2. Create a **Dockerfile** to containerize the script.  
+3. Create an **EKS** deployment and run the web app on that cluster - deploy the app using a helm chart. 
+4. Insert some **html templates** to make the app presentable. 
+5. Create a VPC and all networking components using **Terraform**, in order for the app to be hosted privately. 
+6. Create an **OpenVPN** server in order to access the EC2 server. 
 7. Modify the app to present the most relevant fields in the metadata's query response. 
