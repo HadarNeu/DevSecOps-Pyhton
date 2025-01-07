@@ -121,13 +121,17 @@ class SQSPolicyData:
                 # if there is AWS in the Principal 
                 if 'AWS' in statement['Principal']:
                     aws_principal = statement['Principal']['AWS']
-                    
+
+                    if isinstance(aws_principal, str) and aws_principal == "*" or not aws_principal.startswith(f"arn:aws:iam::{self.account_id}"):
+                        logging.info(f"policy has external principal permissions {queue_url}")
+                        return True 
+
                     if isinstance(aws_principal, list):
                         for principal in aws_principal: #iterate over the principals
                             if principal == "*" or (isinstance(principal, str) and not principal.startswith(f"arn:aws:iam::{self.account_id}")): 
                                 logging.info(f"policy has external principal permissions {queue_url}")
                                 return True 
-
+                            
             logging.info(f"policy is valid {queue_url}")
             return False 
         
@@ -137,12 +141,15 @@ class SQSPolicyData:
         
             
 class SQSExternalPolicy:
-    def __init__(self, s3_bucket: str, file_name: str, log_mode: bool, external_policies={}):
+    def __init__(self, s3_bucket: str, file_path: str, log_mode: bool):
         self.session = boto3.Session()
         self.s3_bucket = self.validate_s3_bucket(s3_bucket)
         self.log_mode = self._validate_log_mode(log_mode)
-        self.external_policies = external_policies
-        self.file_name = file_name
+        self.file_path = self._validate_file_path(file_path)
+
+        logging.info(f"log_mode is valid. Value: {self.log_mode}, type: {type(self.log_mode)}")
+        logging.info(f"file_path is valid. Value: {self.file_path}, type: {type(self.file_path)}")
+
         
     def validate_s3_bucket(self, s3_bucket: str):
         """ this function validates the bucket name exists in the current account"""
@@ -154,8 +161,8 @@ class SQSExternalPolicy:
             bucket_names = [bucket['Name'] for bucket in response['Buckets']]
 
             # Check if the provided bucket name exists
-            if s3_bucket in bucket_names:
-                logging.info(f"Bucket '{s3_bucket}' exists in the current account.")
+            if s3_bucket in bucket_names and isinstance(s3_bucket, str):
+                logging.info(f"Bucket '{s3_bucket}' valid and exists in the current account.")
                 return s3_bucket
             else:
                 logging.error(f"Bucket '{s3_bucket}' does not exist in the current account.")
@@ -176,7 +183,24 @@ class SQSExternalPolicy:
             elif log_mode_test in ('false', 'no', '0', 'off'):
                 return False
             raise ValueError(f"Invalid boolean string for log_mode: {log_mode}")
-    
+        
+    @staticmethod
+    def _validate_file_path(file_path):
+        allowed_extensions = ['.txt', '.log', '.csv', '.md', '.json', 
+            '.yml', '.yaml', '.ini', '.cfg', '.env',
+            '.conf', '.properties', '.list', '.dat',
+            '.out', '.tsv']
+        
+        _, extension = os.path.splitext(file_path)
+
+        if extension not in allowed_extensions:
+            raise ValueError(f"Invalid file extension. Allowed extensions are: {', '.join(allowed_extensions)}")
+        
+        if not isinstance(file_path, str):
+            raise TypeError(f"Invalid file path. File path should be str")
+        
+        else: return file_path
+            
     def modify_policy(self, region: str, queue_url: str, wanted_policy_doc):
         """
         Modifies the policy of a specified SQS queue with the provided policy document.
@@ -222,7 +246,7 @@ class SQSExternalPolicy:
 
         # Make sure no data is getting overritten / duplicated
         try:
-            with open(self.file_name, 'a+') as file:
+            with open(self.file_path, 'a+') as file:
                 # Read existing content and strip newline characters
                 file.seek(0)  # Ensure we're reading from the beginning of the file
                 existing_data = [line.strip() for line in file.readlines()]
@@ -239,19 +263,39 @@ class SQSExternalPolicy:
     def upload_file_to_s3(self):
         """Upload log file to S3"""
         try:
-            logging.info(f"This is the type of s3: {type(self.s3_bucket)}")
-            logging.info(f"This is the type of file name: {type(self.file_name)}")
             s3 = self.session.client('s3')
             timestamp = datetime.now().strftime('%m-%d-%Y_%H-%M-%S')
-            filename = os.path.basename(self.file_name) # strip path is exists
+            filename = os.path.basename(self.file_path) # strip path is exists
             key = f'{filename}-{timestamp}'
             
-            s3.upload_file(self.file_name, self.s3_bucket, key)
+            s3.upload_file(self.file_path, self.s3_bucket, key)
             logging.info(f"Log file uploaded to s3://{self.s3_bucket}/{key}")
             
         except Exception as e:
             logging.error(f"Error uploading log to S3: {str(e)}")
 
+    def clenup_sqs_log_file(self):
+        """
+        Cleans up (empties) the SQS log file if it exists.
+        
+        The function will:
+        1. Check if the log file exists
+        2. Empty it if it exists
+        3. Log the cleanup action
+        
+        Raises:
+            IOError: If there are permission issues or other IO problems
+        """
+        try:
+            if hasattr(self, 'file_path') and os.path.exists(self.file_path):
+                with open(self.file_path, 'w') as f:
+                    f.truncate(0)
+                logging.info(f"Successfully cleaned up SQS log file: {self.file_path}")
+            else:
+                logging.debug("No SQS log file found to clean up")
+        except IOError as e:
+            logging.error(f"Failed to clean up SQS log file: {str(e)}")
+            raise
 
     def run(self):
         logging.info("Starting SQS policy scan")
@@ -260,6 +304,9 @@ class SQSExternalPolicy:
         policy  = {}
         modified_policy = {}
         queue_url = ""
+
+        #before strating the scan, we should clean up the log file if it exists. 
+        self.clenup_sqs_log_file()
 
         # Scan regions sequentially
         regions = sqsData.get_all_regions()
@@ -294,10 +341,10 @@ def main():
 
     # Access environment variables
     s3_bucket = os.getenv('S3_BUCKET')
-    sqs_file_name = os.getenv('FILE_PATH')
+    sqs_file_path = os.getenv('FILE_PATH')
     log_mode = os.getenv('LOG_MODE')
 
-    scanner = SQSExternalPolicy(s3_bucket=s3_bucket, file_name=sqs_file_name, log_mode=log_mode)
+    scanner = SQSExternalPolicy(s3_bucket=s3_bucket, file_path=sqs_file_path, log_mode=log_mode)
     scanner.run()
 
 
