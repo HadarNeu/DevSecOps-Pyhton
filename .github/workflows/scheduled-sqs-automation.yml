@@ -30,11 +30,17 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           
-      - name: Pull and run Docker image
+      - name: Pull Docker image
         run: |
           docker pull hadarneu/sqs-automation:latest
-          docker run --env-file .env hadarneu/sqs-automation:latest 
 
+      - name: Run Docker container
+        run: |
+          docker run -e AWS_ACCESS_KEY_ID=${{ env.AWS_ACCESS_KEY_ID }} \
+                    -e AWS_SECRET_ACCESS_KEY=${{ env.AWS_SECRET_ACCESS_KEY }} \
+                    -e AWS_SESSION_TOKEN=${{ env.AWS_SESSION_TOKEN }} \
+                    -e AWS_REGION=${{ env.AWS_REGION }} \
+                    hadarneu/sqs-automation:latest
 
       - name: Handle potential failures
         if: failure()
