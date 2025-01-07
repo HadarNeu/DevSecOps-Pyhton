@@ -1,4 +1,4 @@
-name: Daily Docker Run
+name: Daily SQS Automation Docker Run
 
 permissions:
   id-token: write
@@ -33,6 +33,24 @@ jobs:
       - name: Pull Docker image
         run: |
           docker pull hadarneu/sqs-automation:latest
+
+      - name: Manual Trivy Setup
+        uses: aquasecurity/setup-trivy@v0.2.0
+        with:
+          cache: true
+          version: v0.57.1
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.29.0
+        with:
+          image-ref: 'hadarneu/sqs-automation:latest'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+          scan-type: 'image'
+          output: 'trivy.json'
 
       - name: Run Docker container
         run: |
