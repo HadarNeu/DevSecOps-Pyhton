@@ -2,8 +2,8 @@
 
 This is a Python Script repo with a focus on DevSecOps. 
 There are two automations: 
-1. **SQS Scanner** - Python Boto3 script, wrapped in a Docker container, automated by GitHub Actions, which main purpose is to handle SQS policies that grant permissions to external principal entities. 
-2. **EC2 Automation** - A simple web app that uses IMDSv2 to collect metadata from an EC2 instance. 
+1. **SQS Scanner** - Python Boto3 script, wrapped in a Docker container, automated by GitHub Actions, which main purpose is to handle SQS policies that grant permissions to external principal entities. [SqsScannerCode](https://github.com/HadarNeu/DevSecOps-Pyhton/blob/main/sqs-automation.py)
+2. **EC2 Automation** - A simple web app that uses IMDSv2 to collect metadata from an EC2 instance. [EC2AutomationCode](https://github.com/HadarNeu/DevSecOps-Pyhton/blob/main/ec2-metadata-automation.py)
 
 # SQS Scanner
 ### Python Code Logic
@@ -47,9 +47,8 @@ After creating all prerequisites you can safely commit to main branch and the [b
 2. **Security-** Adding code testing by synk as well as image testing by trivy. 
 3. **Trivy-** run trivy via trivy docker container.
 4. **Unit testing-** write unit tests for the SQS Scanner. 
-5. **Efficiency-** Add function that gets information from organization if the account is activated in order to make runtime more efiicient. 
-6. **Implement Uplift -** uplift is a version management solution that can increase the version number in every PR/ commit to main. [uplift](https://upliftci.dev/)
-7. **Jobs-** increase number of jobs in the GitHub Workflow in order to get more seperation and easier debugging.  
+5. **Implement Uplift -** uplift is a version management solution that can increase the version number in every PR/ commit to main. [uplift](https://upliftci.dev/)
+6. **Jobs-** increase number of jobs in the GitHub Workflow in order to get more seperation and easier debugging.  
 
 
 # EC2 Automation
