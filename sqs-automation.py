@@ -15,8 +15,6 @@ logging.basicConfig(
     format='%(asctime)s - %(message)s'
 )
 
-
-@dataclass
 class SQSPolicyData:
     def __init__(self, regions=None, account_id=None):
         """
