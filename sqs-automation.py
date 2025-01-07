@@ -28,9 +28,9 @@ class SQSPolicyData:
         """
         self.session = boto3.Session()
         self.regions = regions or self.get_all_regions()
-        self.account_id = account_id or self.get_account_id()
+        self.account_id = account_id or self._get_account_id()
 
-    def get_account_id(self):
+    def _get_account_id(self):
         """
         Uses STS to retrieve the AWS account ID for the current session.
 
@@ -188,14 +188,14 @@ class SQSExternalPolicy:
                              without modifying them, or to modify them (False).
         """
         self.session = boto3.Session()
-        self.s3_bucket = self.validate_s3_bucket(s3_bucket)
+        self.s3_bucket = self._validate_s3_bucket(s3_bucket)
         self.log_mode = self._validate_log_mode(log_mode)
         self.file_path = self._validate_file_path(file_path)
 
         logging.info(f"log_mode is valid. Value: {self.log_mode}, type: {type(self.log_mode)}")
         logging.info(f"file_path is valid. Value: {self.file_path}, type: {type(self.file_path)}")
 
-    def validate_s3_bucket(self, s3_bucket: str):
+    def _validate_s3_bucket(self, s3_bucket: str):
         """
         Validates that the specified S3 bucket name is a string and exists in the current account.
 
