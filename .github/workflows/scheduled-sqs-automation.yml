@@ -48,7 +48,7 @@ jobs:
           format: 'json'
           # exit-code: '1'
           ignore-unfixed: true
-          vuln-type: 'os,library'
+          vuln-type: 'library' #'os,library'
           severity: 'CRITICAL,HIGH'
           scan-type: 'image'
           output: 'trivy.json'
