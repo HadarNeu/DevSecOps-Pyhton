@@ -15,7 +15,4 @@ class SqsPolicy:
     region: str
 
 
-sqs_policy = SqsPolicy(policy=policy_json, queue_url=queue_url, region=region)
-
-
     
