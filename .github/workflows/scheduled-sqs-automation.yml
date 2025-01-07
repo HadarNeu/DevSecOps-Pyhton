@@ -16,7 +16,6 @@ jobs:
     environment: dev
     env:
       ACTIONS_STEP_DEBUG: true
-      AWS_REGION: ${{ vars.DEFAULT_REGION }}
     steps:
       - name: Configure AWS Credentials for region audience
         uses: aws-actions/configure-aws-credentials@v4
@@ -40,7 +39,7 @@ jobs:
           docker run -e AWS_ACCESS_KEY_ID=${{ env.AWS_ACCESS_KEY_ID }} \
                     -e AWS_SECRET_ACCESS_KEY=${{ env.AWS_SECRET_ACCESS_KEY }} \
                     -e AWS_SESSION_TOKEN=${{ env.AWS_SESSION_TOKEN }} \
-                    -e AWS_REGION=${{ env.AWS_REGION }} \
+                    -e AWS_DEFAULT_REGION=${{ env.AWS_DEFAULT_REGION }} \
                     -e S3_BUCKET=${{ vars.S3_BUCKET }} \
                     -e FILE_PATH=${{ vars.FILE_PATH }} \
                     -e LOG_MODE=${{ vars.LOG_MODE }} \
