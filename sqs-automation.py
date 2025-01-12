@@ -155,11 +155,13 @@ class SQSPolicyData:
                 if 'Principal' in statement and 'AWS' in statement['Principal']:
                     aws_principal = statement['Principal']['AWS']
 
+                    # test for a singular value (is the value a string?)
                     if isinstance(aws_principal, str):
                         if aws_principal == "*" or not aws_principal.startswith(f"arn:aws:iam::{self.account_id}"):
                             logging.info(f"Policy has external principal permissions {queue_url}")
                             return True
 
+                    # test for multiple values (is the value a list?)
                     elif isinstance(aws_principal, list):
                         for principal in aws_principal:
                             if principal == "*" or (
